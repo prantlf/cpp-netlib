@@ -1,0 +1,12 @@
+The Debian Package cpp-netlib
+-----------------------------
+
+This package makes the development with the cpp-netlib easier by providing
+an automated installation.  If you run multiple development environments
+you can just maintain them by the standard apt-get.
+
+There is one cpp-netlib-dev package containing public headers and static
+libraries for development purposes and one cpp-netlib, which is currently
+empty but may contain runtime or other files in the future.
+
+ -- Ferdinand Prantl <prantlf@gmail.com>  Mon, 19 Aug 2013 14:18:48 +0200

@@ -1,0 +1,54 @@
+Source: cpp-netlib
+Section: libs
+Priority: optional
+Maintainer: Ferdinand Prantl <prantlf@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), cdbs, cmake, libboost-test1.48-dev, libboost-system1.48-dev, libboost-regex1.48-dev, libboost-date-time1.48-dev, libboost-thread1.48-dev, libboost-filesystem1.48-dev, libboost-program-options1.48-dev, libboost-chrono1.48-dev, libssl-dev, libpthread-stubs0-dev
+Standards-Version: 3.9.3
+Homepage: http://cpp-netlib.org
+Vcs-Git: git://github.com/cpp-netlib/cpp-netlib.git
+Vcs-browser: https://github.com/cpp-netlib/cpp-netlib
+
+Package: cpp-netlib-dev
+Section: libdevel
+Architecture: any
+Depends: cpp-netlib (= ${binary:Version}), ${misc:Depends}, libboost-test1.48-dev, libboost-system1.48-dev, libboost-regex1.48-dev, libboost-date-time1.48-dev, libboost-thread1.48-dev, libboost-filesystem1.48-dev, libboost-program-options1.48-dev, libboost-chrono1.48-dev, libssl-dev, libpthread-stubs0-dev
+Description: Development files for The C++ Network Library Project
+ A collection of open-source libraries for high level network programming.
+ .
+ The project aims to build upon the latest C++ standard (currently C++11)
+ to provide easy to use libraries for network programming.
+ .
+ Currently the library contains an HTTP client and server implementation,
+ a stand-alone URI library, a network message framework, and some concurrency
+ tools.
+
+Package: cpp-netlib-doc
+Section: doc
+Architecture: all
+Suggests: cpp-netlib-dev (= ${binary:Version})
+Description: Documentation files for The C++ Network Library Project
+ A collection of open-source libraries for high level network programming.
+ .
+ The project aims to build upon the latest C++ standard (currently C++11)
+ to provide easy to use libraries for network programming.
+ .
+ Currently the library contains an HTTP client and server implementation,
+ a stand-alone URI library, a network message framework, and some concurrency
+ tools.
+
+Package: cpp-netlib
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-test1.48.0, libboost-system1.48.0, libboost-regex1.48.0, libboost-date-time1.48.0, libboost-thread1.48.0, libboost-filesystem1.48.0, libboost-program-options1.48.0, libboost-chrono1.48.0, openssl, libpthread-stubs0
+Suggests: cpp-netlib-dev (= ${binary:Version})
+Description: The C++ Network Library Project
+ A collection of open-source libraries for high level network programming.
+ .
+ The project aims to build upon the latest C++ standard (currently C++11)
+ to provide easy to use libraries for network programming.
+ .
+ Currently the library contains an HTTP client and server implementation,
+ a stand-alone URI library, a network message framework, and some concurrency
+ tools.
+ .
+ This is an empty package for now; runtime distributables may come in future.

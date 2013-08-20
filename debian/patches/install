@@ -1,0 +1,39 @@
+Description: Adds support for the package installation
+ Installs public headers to include/boost and status libraries to lib to
+ enable an easy integration with the boost package.  When cpp-netlib makes
+ it to boost, dependent code will stay; just this package will have to be
+ removed, because it would rewrite the boost package content.
+ .
+ cpp-netlib (0.10.1) precise; urgency=low
+ .
+   * Initial Release.
+   * Unchanged upstream version debianized.
+Author: Ferdinand Prantl <prantlf@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: vendor
+Forwarded: no
+Reviewed-By: Ferdinand Prantl <prantlf@gmail.com>
+Last-Update: 2013-08-19
+
+--- cpp-netlib-0.10.1.orig/CMakeLists.txt
++++ cpp-netlib-0.10.1/CMakeLists.txt
+@@ -47,3 +47,5 @@ if (MSVC)
+ endif()
+ 
+ enable_testing()
++
++install(DIRECTORY boost/ DESTINATION include/boost)
+--- cpp-netlib-0.10.1.orig/libs/network/src/CMakeLists.txt
++++ cpp-netlib-0.10.1/libs/network/src/CMakeLists.txt
+@@ -16,3 +16,6 @@ add_library(cppnetlib-server-parsers ${C
+ 
+ set(CPP-NETLIB_HTTP_CLIENT_SRCS client.cpp)
+ add_library(cppnetlib-client-connections ${CPP-NETLIB_HTTP_CLIENT_SRCS})
++
++install(TARGETS cppnetlib-uri cppnetlib-server-parsers cppnetlib-client-connections
++        ARCHIVE DESTINATION lib)

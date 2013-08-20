@@ -1,0 +1,18 @@
+cpp-netlib (0.10.1-3) precise; urgency=low
+
+  * Add documentation package.
+
+ -- Ferdinand Prantl <prantlf@gmail.com>  Tue, 20 Aug 2013 10:46:14 +0200
+
+cpp-netlib (0.10.1-2) precise; urgency=low
+
+  * Fix missing dependency on boost filesystem.
+
+ -- Ferdinand Prantl <prantlf@gmail.com>  Tue, 20 Aug 2013 09:56:19 +0200
+
+cpp-netlib (0.10.1-1) precise; urgency=low
+
+  * Initial Release.
+  * Unchanged upstream version debianized.
+
+ -- Ferdinand Prantl <prantlf@gmail.com>  Mon, 19 Aug 2013 14:18:48 +0200
