@@ -52,8 +52,8 @@ namespace detail {
 // from the input sequence to encode.
 template <typename Value>
 char encode_value(Value value) {
-	static char const encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	return encoding[static_cast<unsigned int>(value)];
+    static char const encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    return encoding[static_cast<unsigned int>(value)];
 }
 
 } // namespace detail
@@ -89,11 +89,11 @@ protected:
     // processed the last time; 0 means that the previous quantum was
     // complete 3 octets, 1 that just one octet was avalable and 2 that
     // two octets were available
-	unsigned char triplet_index;
+    unsigned char triplet_index;
     // the value made of the previously shifted and or-ed octets which
     // was not completely split to 6-bit codes, because the last quantum
     // did not stop on the boundary of three octets
-	Value last_encoded_value;
+    Value last_encoded_value;
 
     // encoding of an input chunk needs to read and update the state
     template <
@@ -145,67 +145,67 @@ OutputIterator encode(InputIterator begin,
     // if the previous chunk stopped at encoding the first (1) or the second
     // (2) octet of the three-byte quantum, jump to the right place,
     // otherwise start the loop with an empty encoded value buffer
-	switch (rest.triplet_index) {
+    switch (rest.triplet_index) {
         // this loop processes the input sequence of bit-octets by bits,
         // shifting the current_value (used as a cyclic buffer) left and
         // or-ing next bits there, while pulling the bit-sextets from the
         // high word of the current_value
-		for (value_type current_value;;) {
-	case 0:
+        for (value_type current_value;;) {
+    case 0:
             // if the input sequence is empty or reached its end at the
             // 3-byte boundary, finish with an empty encoding state
-			if (begin == end) {
-				rest.triplet_index = 0;
+            if (begin == end) {
+                rest.triplet_index = 0;
                 // the last encoded value is not interesting - it would not
                 // be used, because processing of the next chunk will start
                 // at the 3-byte boundary
-				rest.last_encoded_value = 0;
-				return output;
-			}
+                rest.last_encoded_value = 0;
+                return output;
+            }
             // read the first octet from the current triplet
-			current_value = *begin++;
+            current_value = *begin++;
             // use just the upper 6 bits to encode it to the target alphabet
-			encoded_value = (current_value & 0xfc) >> 2;
-			*output++ = detail::encode_value(encoded_value);
+            encoded_value = (current_value & 0xfc) >> 2;
+            *output++ = detail::encode_value(encoded_value);
             // shift the remaining two bits up to make place for the upoming
             // part of the next octet
-			encoded_value = (current_value & 0x03) << 4;
-	case 1:
+            encoded_value = (current_value & 0x03) << 4;
+    case 1:
             // if the input sequence reached its end after the first octet
             // from the quantum triplet, store the encoding state and finish
-			if (begin == end) {
-				rest.triplet_index = 1;
-				rest.last_encoded_value = encoded_value;
-				return output;
-			}
+            if (begin == end) {
+                rest.triplet_index = 1;
+                rest.last_encoded_value = encoded_value;
+                return output;
+            }
             // read the second first octet from the current triplet
-			current_value = *begin++;
+            current_value = *begin++;
             // combine the upper four bits (as the lower part) with the
             // previous two bits to encode it to the target alphabet
-			encoded_value |= (current_value & 0xf0) >> 4;
-			*output++ = detail::encode_value(encoded_value);
+            encoded_value |= (current_value & 0xf0) >> 4;
+            *output++ = detail::encode_value(encoded_value);
             // shift the remaining four bits up to make place for the upoming
             // part of the next octet
-			encoded_value = (current_value & 0x0f) << 2;
-	case 2:
+            encoded_value = (current_value & 0x0f) << 2;
+    case 2:
             // if the input sequence reached its end after the second octet
             // from the quantum triplet, store the encoding state and finish
-			if (begin == end) {
-				rest.triplet_index = 2;
-				rest.last_encoded_value = encoded_value;
-				return output;
-			}
+            if (begin == end) {
+                rest.triplet_index = 2;
+                rest.last_encoded_value = encoded_value;
+                return output;
+            }
             // read the third octet from the current triplet
-			current_value = *begin++;
+            current_value = *begin++;
             // combine the upper two bits (as the lower part) with the
             // previous four bits to encode it to the target alphabet
-			encoded_value |= (current_value & 0xc0) >> 6;
-			*output++ = detail::encode_value(encoded_value);
+            encoded_value |= (current_value & 0xc0) >> 6;
+            *output++ = detail::encode_value(encoded_value);
             // encode the remaining 6 bits to the target alphabet
-			encoded_value  = current_value & 0x3f;
-			*output++ = detail::encode_value(encoded_value);
-		}
-	}
+            encoded_value  = current_value & 0x3f;
+            *output++ = detail::encode_value(encoded_value);
+        }
+    }
     return output;
 }
 
