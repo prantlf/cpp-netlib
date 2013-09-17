@@ -1,46 +1,33 @@
-Benchmark results from GCC 4.6.4 without any optimization (no switches):
+Benchmark results from GCC 4.6.4 with the -O3 optimization:
 
-  Executing base64_stateless_test:
-    Encoding 16 MB buffer took 4.81s.
-  Executing base64_stateful_buffer_test:
-    Encoding 16 MB buffer took 4.93s.
-    Encoding 256 x 64 KB buffers took 4.92s.
-  Executing base64_stateful_transform_test:
-    Encoding 16 MB buffer took 5.32s.
-    Encoding 256 x 64 KB buffers took 5.25s.
-  Executing base64_stateful_iterator_test:
-    Encoding 16 MB buffer took 7.03s.
-    Encoding 256 x 64 KB buffers took 7.02s.
-  Executing base64_standalone_test:
-    Encoding 16 MB buffer took 0.93s.
-    Encoding 256 x 64 KB buffers took 1.01s.
-  Executing base64_standalone_io_test:
-    Encoding 16 MB buffer took 2.31s.
-    Encoding 256 x 64 KB buffers took 2.32s.
+1. Executing base64_from_message_test:
+     Encoding 160 MB buffer took 1.68s.
+2. Executing base64_stateless_test:
+     Encoding 160 MB buffer took 4.25s.
+3. Executing base64_stateful_buffer_test:
+     Encoding 160 MB buffer took 5.11s.
+     Encoding 1280 x 320 KB buffers took 12.85s.
+4. Executing base64_stateful_transform_test:
+     Encoding 160 MB buffer took 4.64s.
+     Encoding 1280 x 320 KB buffers took 11.68s.
+5. Executing base64_stateful_iterator_test:
+     Encoding 160 MB buffer took 4.82s.
+     Encoding 1280 x 320 KB buffers took 11.66s.
+6. Executing base64_standalone_test:
+     Encoding 160 MB buffer took 2.03s.
+     Encoding 1280 x 320 KB buffers took 5.65s.
+7. Executing base64_test:
+     Encoding 160 MB buffer took 2.01s.
+     Encoding 1280 x 320 KB buffers took 5.63s.
+8. Executing base64_io_test:
+     Encoding 160 MB buffer took 3.75s.
+     Encoding 1280 x 320 KB buffers took 9.97s.
 
-Benchmark results from GCC 4.6.4 with the -O3 optimization; the processed
-data were 10 times bigger than for the test run without any optimization:
-
-  Executing base64_stateless_test:
-    Encoding 160 MB buffer took 3.42s.
-  Executing base64_stateful_buffer_test:
-    Encoding 160 MB buffer took 3.69s.
-    Encoding 1280 x 320 KB buffers took 9.43s.
-  Executing base64_stateful_transform_test:
-    Encoding 160 MB buffer took 4.71s.
-    Encoding 1280 x 320 KB buffers took 12.27s.
-  Executing base64_stateful_iterator_test:
-    Encoding 160 MB buffer took 4.65s.
-    Encoding 1280 x 320 KB buffers took 11.92s.
-  Executing base64_standalone_test:
-    Encoding 160 MB buffer took 1.46s.
-    Encoding 1280 x 320 KB buffers took 4.09s.
-  Executing base64_standalone_io_test:
-    Encoding 160 MB buffer took 3.93s.
-    Encoding 1280 x 320 KB buffers took 10.18s.
-
-Testing the base64_stateless was done for the sake of completeness just to
-test the pure boost implementation only; state is needed for chunked encoding.
+Testing the base64_from_message was done for the sake of completeness
+just to test the internal implementation in the cpp-netlib.  Testing
+the base64_stateless was done from the same reason; to test the pure
+boost implementation alone; both implementations lack the state handling
+and are not suitable for chunked encoding.
 
 The three different base64_stateful_xxx implementations are comparable;
 the base64_stateful_iterator may have spent more time in copy constructors,

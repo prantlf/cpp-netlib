@@ -11,19 +11,20 @@ namespace boost {
 namespace network {
 namespace utils {
 
-// Offers an interface to the BASE64 converter from encode.hpp, which is
-// based on stream manipulators to be friendly to the usage with output
-// streams combining heterogenous output by using the output operators.
-// The encoding state is serialized to long and maintained in te extensible
-// internal array of the output stream.
+// Offers an alternative interface to the BASE64 converter from encode.hpp,
+// which is based on stream manipulators to be friendly to the usage with
+// output streams.  You can combine heterogenous input parts by using the
+// stream output operators.  The encoding state is serialized to long and
+// maintained in te extensible internal array of the output stream.
 //
-// Summarized interface - ostream manipulators and one function:
+// Summarized interface - ostream manipulators and two functions:
 //
-// encode(InputIterator begin, InputIterator end)
-// encode(InputRange const & value)
-// encode(char const * value)
-// encode_rest
-// clear_state
+// encode<Traits>(InputIterator begin, InputIterator end)
+// encode<Traits>(InputRange const & value)
+// encode<Traits>(char const * value)
+// encode_rest<Traits>
+//
+// void clear_state(std::basic_ostream<Char> & output)
 // bool empty_state(std::basic_ostream<Char> & output)
 
 namespace base64 {
@@ -35,38 +36,16 @@ using namespace boost::archive::iterators;
 
 namespace detail {
 
-// Enables transferring of the input sequence for the BASE64 encoding into
-// the ostream operator defined for it, which performs the operation.  It
-// is to be used from ostream manipulators.
-//
-// std::basic_ostream<Char> & output = ...;
-// output << input_wrapper<InputIterator>(value.begin(), value.end());
-template <typename InputIterator>
-struct input_wrapper {
-    input_wrapper(InputIterator begin, InputIterator end)
-        : begin(begin), end(end) {}
-
-private:
-    InputIterator begin, end;
-
-    // only encoding of an input sequence needs access to it
-    template <
-        typename Char,
-        typename InputIterator2
-        >
-    friend std::basic_ostream<Char> &
-    operator <<(std::basic_ostream<Char> & output,
-                  input_wrapper<InputIterator2> input_wrapper);
-};
+// ENCODING STREAM STATE: Stream transferring structure
+// ----------------------------------------------------
 
 // The output stream state should be used only in a single scope around
-// encoding operations.  Constructor performs initialization from the
-// output stream internal extensible array and destructor updates it
-// according to the encoding result.  It inherits from the base64::state
-// to gain access to its protected members and allow easy value passing
-// to base64::encode.
+// encoding operations.  the constructor performs initialization from the
+// output stream internal extensible array and the destructor updates it
+// there according to the encoding result.  It inherits directly from the
+// base64::state to gain access to its protected members and allow an easy
+// way to pass the state to the base64::encode().
 // 
-//
 // std::basic_ostream<Char> & output = ...;
 // {
 //     state<Char, Value> rest(output);
@@ -79,7 +58,8 @@ struct state : public boost::network::utils::base64::state<Value> {
     // initialize the (inherited) contents of the base64::state<> from the
     // output stream internal extensible array
     state(std::basic_ostream<Char> & output) : super_t(), output(output) {
-        const unsigned triplet_index_size = sizeof(super_t::triplet_index) * 8;
+        const unsigned triplet_index_size =
+            sizeof(super_t::triplet_index) * 8;
         unsigned long data = static_cast<unsigned long>(storage());
         // mask the long value with the bit-size of the triplet_index member
         super_t::triplet_index = data & ((1 << triplet_index_size) - 1);
@@ -92,7 +72,8 @@ struct state : public boost::network::utils::base64::state<Value> {
     // update the value in the output stream internal extensible array by
     // the last (inherited) contents of the base64::state<>
     ~state() {
-        const unsigned triplet_index_size = sizeof(super_t::triplet_index) * 8;
+        const unsigned triplet_index_size =
+            sizeof(super_t::triplet_index) * 8;
         // store the last_encoded_value in the data value first
         unsigned long data =
             static_cast<unsigned long>(super_t::last_encoded_value);
@@ -108,35 +89,79 @@ private:
     // value allocated in the output stream internal extensible array
     BOOST_STATIC_ASSERT(sizeof(super_t) <= sizeof(long));
 
-    // allow only the construction with an output stream (strict RAII)
+    // allow only the local-scoped construction with an output stream
     state();
     state(state<Char, Value> const &);
 
     std::basic_ostream<Char> & output;
 
+    // gives access to the output stream internal extensible array;
+    // the long allocated for the BASE64 encoding state
     long & storage() {
         static int index = std::ios_base::xalloc();
         return output.iword(index);
     } 
 };
 
+// OSTREAM MANIPULATOR SUPPORT: Input sequence wrapper and output operator
+// -----------------------------------------------------------------------
+
+// Encapsulates the input sequence for the BASE64 encoding in a structure
+// with an ostream operator defined for it, which performs the encoding.
+// It is returned from ostream manipulators which are the public interface.
+//
+// std::basic_ostream<Char> & output = ...;
+// output << input_wrapper<InputIterator>(value.begin(), value.end());
+template <
+    typename Traits,
+    typename InputIterator
+    >
+struct input_wrapper {
+    input_wrapper(InputIterator begin, InputIterator end)
+        : begin(begin), end(end) {}
+
+    input_wrapper(input_wrapper<Traits, InputIterator> const & source)
+        : begin(source.begin), end(source.end) {}
+
+private:
+    InputIterator begin, end;
+
+    // only encoding of an input sequence needs the access
+    template <
+        typename Traits2,
+        typename Char,
+        typename InputIterator2
+        >
+    friend std::basic_ostream<Char> &
+    operator <<(std::basic_ostream<Char> & output,
+                input_wrapper<Traits2, InputIterator2> const & input);
+};
+
 // Output operator implementing the BASE64 encoding for an input sequence
 // which was wrapped by the ostream manipulator; the state must be preserved
-// because multiple sequences can be sent in the ouptut by this operator.
+// because multiple sequences can be sent in the output by this operator.
 template <
+    typename Traits,
     typename Char,
     typename InputIterator
     >
 std::basic_ostream<Char> &
 operator <<(std::basic_ostream<Char> & output,
-              input_wrapper<InputIterator> input) {
+              input_wrapper<Traits, InputIterator> const & input) {
     typedef typename iterator_value<InputIterator>::type value_type;
+    // load the encoding state from the stream
     state<Char, value_type> rest(output);
-    base64::encode(input.begin, input.end, ostream_iterator<Char>(output), rest);
+    base64::encode<Traits>(input.begin, input.end,
+                           ostream_iterator<Char>(output), rest);
     return output;
+    // the destructor of the rest variable stores the updated encoding
+    // state to the output stream
 }
 
 } // namespace detail
+
+// OSTREAM MANIPULATORS: Encoding continuing and finishing functions
+// -----------------------------------------------------------------
 
 // Encoding ostream manipulator for sequences specified by the pair of begin
 // and end iterators.
@@ -145,10 +170,13 @@ operator <<(std::basic_ostream<Char> & output,
 // std::basic_ostream<Char> & output = ...;
 // output << base64::io::encode(buffer.begin(), buffer.end()) << ... <<
 //           base64::io::encode_rest<unsigned char>;
-template <typename InputIterator>
-detail::input_wrapper<InputIterator> encode(InputIterator begin,
-                                             InputIterator end) {
-  return detail::input_wrapper<InputIterator>(begin, end);
+template <
+    typename Traits,
+    typename InputIterator
+    >
+detail::input_wrapper<Traits, InputIterator> encode(InputIterator begin,
+                                                    InputIterator end) {
+  return detail::input_wrapper<Traits, InputIterator>(begin, end);
 }
 
 // Encoding ostream manipulator processing whole sequences which either
@@ -163,12 +191,17 @@ detail::input_wrapper<InputIterator> encode(InputIterator begin,
 // std::basic_ostream<Char> & output = ...;
 // output << base64::io::encode(buffer) << ... <<
 //           base64::io::encode_rest<unsigned char>;
-template <typename InputRange>
-detail::input_wrapper<typename boost::range_const_iterator<InputRange>::type>
+template <
+    typename Traits,
+    typename InputRange
+    >
+detail::input_wrapper<Traits,
+                      typename boost::range_const_iterator<InputRange>::type>
 encode(InputRange const & value) {
-    typedef typename boost::range_const_iterator<InputRange>::type InputIterator;
-    return detail::input_wrapper<InputIterator>(boost::begin(value),
-                                                  boost::end(value));
+    typedef typename boost::range_const_iterator<
+                                InputRange>::type InputIterator;
+    return detail::input_wrapper<Traits, InputIterator>(boost::begin(value),
+                                                        boost::end(value));
 }
 
 // Encoding ostream manipulator processing string literals; the usual
@@ -177,8 +210,10 @@ encode(InputRange const & value) {
 //
 // std::basic_ostream<Char> & output = ...;
 // output << base64::io::encode("ab") << ... << base64::io::encode_rest<char>;
-inline detail::input_wrapper<char const *> encode(char const * value) {
-    return detail::input_wrapper<char const *>(value, value + strlen(value));
+template <typename Traits>
+detail::input_wrapper<Traits, char const *> encode(char const * value) {
+    return detail::input_wrapper<Traits, char const *>(
+        value, value + strlen(value));
 }
 
 // Encoding ostream manipulator which finishes encoding of the previously
@@ -189,13 +224,21 @@ inline detail::input_wrapper<char const *> encode(char const * value) {
 // after previous usages of the encode manipulator.
 //
 // std::basic_ostream<Char> & output = ...;
-// output << base64::io::encode("ab") << ... << base64::io::encode_rest<char>;
-template <typename Value, typename Char>
+// output << base64::io::encode("ab") << ... <<
+//           base64::io::encode_rest<char>;
+template <
+    typename Traits,
+    typename Value,
+    typename Char
+    >
 std::basic_ostream<Char> & encode_rest(std::basic_ostream<Char> & output) {
     detail::state<Char, Value> rest(output);
-    base64::encode_rest(ostream_iterator<Char>(output), rest);
+    base64::encode_rest<Traits>(ostream_iterator<Char>(output), rest);
     return output;
 }
+
+// ENCODING STATE HELPERS: Clearing and check for the emptiness
+// ------------------------------------------------------------
 
 // Clears the encoding state in the internal array of the output stream.
 // Use it to re-use a state object in an unknown state only;  Encoding of
@@ -207,12 +250,14 @@ std::basic_ostream<Char> & encode_rest(std::basic_ostream<Char> & output) {
 //
 // std::basic_ostream<Char> & output = ...;
 // output << base64::io::encode("ab") << ...;
-// output << clear_state<char>;
-template <typename Value, typename Char>
-std::basic_ostream<Char> & clear_state(std::basic_ostream<Char> & output) {
+// clear_state<char>(output);
+template <
+    typename Value,
+    typename Char
+    >
+void clear_state(std::basic_ostream<Char> & output) {
     detail::state<Char, Value> rest(output);
     rest.clear();
-    return output;
 }
 
 // Checks if the encoding state in the internal array of the output stream
@@ -221,7 +266,10 @@ std::basic_ostream<Char> & clear_state(std::basic_ostream<Char> & output) {
 // std::basic_ostream<Char> & output = ...;
 // output << base64::io::encode("ab") << ...;
 // bool is_complete = base64::io::empty_state<char>(output);
-template <typename Value, typename Char>
+template <
+    typename Value,
+    typename Char
+    >
 bool empty_state(std::basic_ostream<Char> & output) {
     detail::state<Char, Value> rest(output);
     return rest.empty();
