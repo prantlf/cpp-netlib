@@ -116,7 +116,7 @@ static unsigned test_index = 0;
 #undef encode_single_block
 #undef encode_multiple_blocks
 #define encode_single_block std::string result = \
-    base64::encode<base64::normal, char>(buffer)
+    base64::normal::encode<char>(buffer)
 #define encode_multiple_blocks \
     std::string result; \
     std::back_insert_iterator<std::string> result_encoder(result); \
@@ -124,10 +124,10 @@ static unsigned test_index = 0;
     for (unsigned block_index = 0; block_index < buffers.size(); \
                                    ++block_index) { \
         std::vector<unsigned char> const & buffer = buffers[block_index]; \
-        base64::encode<base64::normal>(buffer.begin(), buffer.end(), \
-                                       result_encoder, rest); \
+        base64::normal::encode(buffer.begin(), buffer.end(), \
+                               result_encoder, rest); \
     } \
-    base64::encode_rest<base64::normal>(result_encoder, rest)
+    base64::normal::encode_rest(result_encoder, rest)
 
 // 7. testing the code from boost/network/utils/base64/encode.hpp
 #define base64 base64
@@ -142,17 +142,17 @@ static unsigned test_index = 0;
 #undef encode_multiple_blocks
 #define test_name concatenate(concatenate(base64, _io), _test)
 #define encode_single_block std::stringstream result; \
-    result << base64::io::encode<base64::normal>(buffer) << \
-              base64::io::encode_rest<base64::normal, unsigned char>
+    result << base64::io::normal::encode(buffer) << \
+              base64::io::normal::encode_rest<unsigned char>
 #define encode_multiple_blocks \
     std::stringstream result; \
     for (unsigned block_index = 0; block_index < buffers.size(); \
                                    ++block_index) { \
         std::vector<unsigned char> const & buffer = buffers[block_index]; \
-        result << base64::io::encode<base64::normal>(buffer.begin(), \
-                                                     buffer.end()); \
+        result << base64::io::normal::encode(buffer.begin(), \
+                                             buffer.end()); \
     } \
-    result << base64::io::encode_rest<base64::normal, unsigned char>
+    result << base64::io::normal::encode_rest<unsigned char>
 
 // 8, testing the iostream implementation with the code from
 // boost/network/utils/base64/encode.hpp
